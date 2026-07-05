@@ -29,7 +29,7 @@ interface AppState {
   timerActive: boolean
   timerMode: string
   timerWorkSeconds: number
-  setTimerSeconds: (s: number) => void
+  setTimerSeconds: (s: number | ((prev: number) => number)) => void
   setTimerActive: (a: boolean) => void
   setTimerMode: (mode: string, workSecs: number) => void
 
@@ -50,7 +50,7 @@ export const useAppStore = create<AppState>()(
       timerActive: false,
       timerMode: '25/5',
       timerWorkSeconds: 25 * 60,
-      setTimerSeconds: (s) => set({ timerSeconds: s }),
+      setTimerSeconds: (s) => set((state) => ({ timerSeconds: typeof s === 'function' ? s(state.timerSeconds) : s })),
       setTimerActive: (a) => set({ timerActive: a }),
       setTimerMode: (mode, workSecs) =>
         set({ timerMode: mode, timerSeconds: workSecs, timerWorkSeconds: workSecs, timerActive: false }),
