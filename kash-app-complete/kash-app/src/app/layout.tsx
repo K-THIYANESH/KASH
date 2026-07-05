@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.className} bg-[#0a0a0f] text-white antialiased`}>
+      <body className={`${inter.className} bg-[#0a0a0f] text-white antialiased`} suppressHydrationWarning>
         <Providers>
           {children}
           <Toaster position="top-center" toastOptions={{ duration: 2500, style: { background: '#1e1e2e', color: '#e8e8f0', border: '1px solid rgba(255,255,255,0.08)', fontSize: 13, borderRadius: 12 } }} />
