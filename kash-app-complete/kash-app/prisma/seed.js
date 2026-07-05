@@ -1,52 +1,64 @@
-// prisma/seed.js — Seeds the two KA-SH users + achievements + default data
+// prisma/seed.js — Seeds the two KA-SH users + achievements with 0 starting stats and no mock tasks/memories
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Seeding KA-SH database...')
+  console.log('🌱 resetting and seeding clean KA-SH database...')
 
-  // Create users
+  // 1. Wipe existing data to ensure a completely clean start
+  await prisma.taskAssignee.deleteMany()
+  await prisma.taskCompletion.deleteMany()
+  await prisma.task.deleteMany()
+  await prisma.memory.deleteMany()
+  await prisma.appreciation.deleteMany()
+  await prisma.streak.deleteMany()
+  await prisma.userAchievement.deleteMany()
+  await prisma.userSettings.deleteMany()
+  await prisma.notification.deleteMany()
+  await prisma.studySession.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.achievement.deleteMany()
+
+  console.log('🧹 Cleaned up existing database records.')
+
+  // 2. Create users with clean (zeroed) starting stats
   const hashedPw = await bcrypt.hash('kash2025', 12)
 
-  const thiyanesh = await prisma.user.upsert({
-    where: { email: 'thiyanesh@kash.app' },
-    update: {},
-    create: {
+  const thiyanesh = await prisma.user.create({
+    data: {
       name: 'Thiyanesh K',
       email: 'thiyanesh@kash.app',
       password: hashedPw,
-      xp: 1240,
-      level: 4,
+      xp: 0,
+      level: 1,
       settings: {
         create: { dailyGoal: 6 }
       },
       streaks: {
-        create: { currentStreak: 18, longestStreak: 22, totalDays: 18 }
+        create: { currentStreak: 0, longestStreak: 0, totalDays: 0 }
       }
     }
   })
 
-  const kavibala = await prisma.user.upsert({
-    where: { email: 'kavibala@kash.app' },
-    update: {},
-    create: {
+  const kavibala = await prisma.user.create({
+    data: {
       name: 'Kavibala J',
       email: 'kavibala@kash.app',
       password: hashedPw,
-      xp: 1580,
-      level: 5,
+      xp: 0,
+      level: 1,
       settings: {
         create: { dailyGoal: 8 }
       },
       streaks: {
-        create: { currentStreak: 18, longestStreak: 22, totalDays: 18 }
+        create: { currentStreak: 0, longestStreak: 0, totalDays: 0 }
       }
     }
   })
 
-  // Seed achievements
+  // 3. Seed achievements definitions (required for achievement system to work)
   const achievementData = [
     { key: 'first_task', name: 'First Task', description: 'Completed your very first task', icon: '🎯', xpReward: 50, condition: { type: 'tasks_completed', threshold: 1 } },
     { key: 'ten_tasks', name: 'Ten Down', description: '10 tasks completed', icon: '🔟', xpReward: 100, condition: { type: 'tasks_completed', threshold: 10 } },
@@ -63,54 +75,12 @@ async function main() {
   ]
 
   for (const a of achievementData) {
-    await prisma.achievement.upsert({
-      where: { key: a.key },
-      update: {},
-      create: a
+    await prisma.achievement.create({
+      data: a
     })
   }
 
-  // Seed some sample tasks
-  const tasks = [
-    { title: 'Complete DSA problems (LeetCode)', description: 'Solve 3 medium problems', priority: 'HIGH', category: 'CODING', xpReward: 20 },
-    { title: 'Read Chapter 5 — DBMS', description: 'Focus on normalization', priority: 'MEDIUM', category: 'STUDY', xpReward: 10 },
-    { title: 'Morning workout', description: '30 min cardio + stretch', priority: 'LOW', category: 'FITNESS', xpReward: 10 },
-    { title: 'Read "Atomic Habits" Ch 8', description: 'Notes + summary', priority: 'LOW', category: 'READING', xpReward: 10 },
-    { title: 'Review ML notes', description: 'CNN architectures', priority: 'MEDIUM', category: 'STUDY', xpReward: 10 },
-  ]
-
-  for (const task of tasks) {
-    const created = await prisma.task.create({
-      data: { ...task, creatorId: thiyanesh.id }
-    })
-    // Assign to both
-    await prisma.taskAssignee.createMany({
-      data: [
-        { taskId: created.id, userId: thiyanesh.id },
-        { taskId: created.id, userId: kavibala.id },
-      ],
-      skipDuplicates: true
-    })
-  }
-
-  // Seed memories
-  await prisma.memory.createMany({
-    data: [
-      { content: 'Thiyanesh & Kavibala hit their first 7-day streak! 🎉 Both completed every task.', type: 'MILESTONE', authorId: thiyanesh.id },
-      { content: 'Finished our first joint coding sprint — built the RAKTA AI prototype together.', type: 'NOTE', authorId: kavibala.id },
-      { content: 'Consistency checkpoint: 50 tasks completed combined! Half-century unlocked.', type: 'ACHIEVEMENT', authorId: thiyanesh.id },
-    ]
-  })
-
-  // Seed appreciations
-  await prisma.appreciation.createMany({
-    data: [
-      { message: "Kavi, you've been absolutely consistent this week. Your dedication is inspiring! 💜", senderId: thiyanesh.id, receiverId: kavibala.id },
-      { message: "Thiya, the way you stayed focused during our streak is incredible. You push me to be better! 🔥", senderId: kavibala.id, receiverId: thiyanesh.id },
-    ]
-  })
-
-  console.log('✅ Seed complete!')
+  console.log('✅ Clean seed complete!')
   console.log(`   Thiyanesh: thiyanesh@kash.app / kash2025`)
   console.log(`   Kavibala:  kavibala@kash.app  / kash2025`)
 }
