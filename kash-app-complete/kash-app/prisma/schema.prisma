@@ -1,0 +1,268 @@
+// KA-SH Database Schema
+// Free stack: PostgreSQL (Neon/Railway/Supabase free tier) + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS ─────────────────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  avatar        String?
+  role          UserRole  @default(MEMBER)
+  xp            Int       @default(0)
+  level         Int       @default(1)
+  timezone      String    @default("Asia/Kolkata")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  tasksCreated      Task[]            @relation("TaskCreator")
+  tasksAssigned     TaskAssignee[]
+  completions       TaskCompletion[]
+  streaks           Streak[]
+  studySessions     StudySession[]
+  achievements      UserAchievement[]
+  memoriesCreated   Memory[]
+  appreciationsSent     Appreciation[]  @relation("AppreciationSender")
+  appreciationsReceived Appreciation[]  @relation("AppreciationReceiver")
+  notificationsOwned    Notification[]
+  settings          UserSettings?
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+// ─── TASKS ─────────────────────────────────────────────────────────────────
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority     @default(MEDIUM)
+  category    Category     @default(STUDY)
+  status      TaskStatus   @default(PENDING)
+  xpReward    Int          @default(10)
+  dueDate     DateTime?
+  estimatedMinutes Int?
+  recurrence  Recurrence   @default(NONE)
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  creatorId   String
+  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assignees   TaskAssignee[]
+  completions TaskCompletion[]
+
+  @@map("tasks")
+}
+
+model TaskAssignee {
+  id      String @id @default(cuid())
+  taskId  String
+  userId  String
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_assignees")
+}
+
+model TaskCompletion {
+  id          String   @id @default(cuid())
+  taskId      String
+  userId      String
+  completedAt DateTime @default(now())
+  xpEarned    Int      @default(10)
+  note        String?
+
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_completions")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Category {
+  STUDY
+  CODING
+  READING
+  FITNESS
+  PERSONAL
+  CUSTOM
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Recurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+// ─── STREAKS ───────────────────────────────────────────────────────────────
+model Streak {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  currentStreak Int     @default(0)
+  longestStreak Int     @default(0)
+  lastActiveDate DateTime?
+  totalDays    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+// ─── STUDY SESSIONS ────────────────────────────────────────────────────────
+model StudySession {
+  id          String      @id @default(cuid())
+  userId      String
+  title       String      @default("Focus Session")
+  mode        TimerMode   @default(POMODORO_25)
+  durationMinutes Int
+  startedAt   DateTime    @default(now())
+  endedAt     DateTime?
+  completed   Boolean     @default(false)
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_sessions")
+}
+
+enum TimerMode {
+  POMODORO_25
+  POMODORO_50
+  POMODORO_90
+  CUSTOM
+}
+
+// ─── ACHIEVEMENTS ──────────────────────────────────────────────────────────
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String
+  icon        String
+  xpReward    Int      @default(0)
+  condition   Json     // { type: "tasks_completed", threshold: 10 }
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// ─── MEMORIES ──────────────────────────────────────────────────────────────
+model Memory {
+  id        String     @id @default(cuid())
+  content   String
+  type      MemoryType @default(NOTE)
+  authorId  String
+  createdAt DateTime   @default(now())
+
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("memories")
+}
+
+enum MemoryType {
+  NOTE
+  MILESTONE
+  ACHIEVEMENT
+  CELEBRATION
+}
+
+// ─── APPRECIATIONS ─────────────────────────────────────────────────────────
+model Appreciation {
+  id         String   @id @default(cuid())
+  message    String
+  senderId   String
+  receiverId String
+  createdAt  DateTime @default(now())
+
+  sender     User     @relation("AppreciationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("AppreciationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("appreciations")
+}
+
+// ─── NOTIFICATIONS ─────────────────────────────────────────────────────────
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TASK_DUE
+  TASK_COMPLETED
+  STREAK_WARNING
+  STREAK_MILESTONE
+  ACHIEVEMENT_UNLOCKED
+  PARTNER_COMPLETED
+  DAILY_SUMMARY
+  APPRECIATION_RECEIVED
+}
+
+// ─── USER SETTINGS ─────────────────────────────────────────────────────────
+model UserSettings {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  notificationsEnabled  Boolean @default(true)
+  dailyGoal             Int     @default(5)
+  preferredTimerMode    String  @default("25/5")
+  theme                 String  @default("dark")
+
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
