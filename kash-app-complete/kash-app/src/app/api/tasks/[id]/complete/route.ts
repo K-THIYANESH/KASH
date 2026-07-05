@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { updateStreak } from '@/lib/streaks'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   await prisma.taskCompletion.create({ data: { taskId: id, userId: session.user.id, xpEarned: task.xpReward } })
   const user = await prisma.user.update({ where: { id: session.user.id }, data: { xp: { increment: task.xpReward } } })
+
+  // Update/maintain user daily streak
+  await updateStreak(session.user.id)
 
   return NextResponse.json({ completed: true, xpEarned: task.xpReward, newXP: user.xp })
 }
