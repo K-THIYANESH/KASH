@@ -64,9 +64,16 @@ export default function DashboardPage() {
           </motion.h1>
           <p className="text-xs text-white/40 mt-0.5">KA-SH Dashboard</p>
         </div>
-        <div className="flex gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white">KA</div>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white">SH</div>
+        <div className="flex items-center gap-3">
+          <Link href="/chat" className="p-2 bg-white/[0.04] border border-white/[0.06] rounded-full text-white/70 hover:text-white hover:bg-white/[0.08] transition-all" title="Chat">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </Link>
+          <div className="flex gap-1.5">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white">KA</div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white">SH</div>
+          </div>
         </div>
       </div>
 
