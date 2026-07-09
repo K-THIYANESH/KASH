@@ -127,7 +127,7 @@ export default function ChatPage() {
   const partnerInitials = partner?.name ? partner.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'PA'
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0f] pb-24">
+    <div className="flex flex-col h-dvh bg-[#0a0a0f] pb-[80px]">
       {/* Header */}
       <div className="px-4 py-3 flex items-center justify-between border-b border-white/[0.06] bg-[#0f0f1a]/80 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-3">
@@ -204,7 +204,7 @@ export default function ChatPage() {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-violet-500/50 transition-colors"
+            className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-base text-white placeholder-white/30 focus:outline-none focus:border-violet-500/50 transition-colors"
           />
           <button
             type="submit"
